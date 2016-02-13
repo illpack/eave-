@@ -1,0 +1,99 @@
+using UnityEngine;
+using System.Collections;
+
+public class myLocationScript : MonoBehaviour {
+
+    // Refer to the GUI Skin (we are getting feedback from the UI)
+    public  		GUISkin myGUISkin;
+    private 		myNetworkHelper network_helper;
+    private 		myGUIScript local_gui;
+    private bool 	working = false;
+
+	// Use this for initialization
+	IEnumerator Start () { //This IEnumerator waits for things to happen
+		
+        local_gui 	   = GameObject.Find("myGUI").GetComponentInChildren<myGUIScript>(); // find in "GameObject", get Component in children "Script"
+        network_helper = GameObject.Find("myNetworkHelper").GetComponentInChildren<myNetworkHelper>();
+   
+	    if (this.myGUISkin == null) // If there is no Skin assigned
+        {
+            local_gui.addDebug("Please assign a GUISkin on the editor!");
+            this.enabled = false;
+            
+            //IEnumerator needs a "yield return" structure
+            yield return false;
+        }
+        if (!Input.location.isEnabledByUser)  // If there is no location service enabled
+        {
+            local_gui.addDebug("User has not enabled location");
+            yield return false;
+        }
+
+        // First parameter is accuracy (in this case 1 meter) 
+        // The second is how much should it change to get an update (again, this time 1m)
+        Input.location.Start(1f, 1f);
+
+        // Wait til service initializes
+        int maxWait = 20;
+        while((Input.location.status == LocationServiceStatus.Initializing) && maxWait > 0)
+        {
+            yield return new WaitForSeconds(1);
+            maxWait--;
+        }
+
+        if (maxWait < 1)
+        {
+            print("Timed out");
+            yield return false;
+        }
+
+        if (Input.location.status == LocationServiceStatus.Failed)
+        {
+            local_gui.addDebug("Unable to determine device's location");
+            yield return false;
+        }
+
+        else
+        {
+            local_gui.addDebug("Location: " + 
+				Input.location.lastData.latitude + ":" +
+                Input.location.lastData.longitude + ":" +
+                (long)Input.location.lastData.timestamp);
+            working = true;
+        }
+
+        //If we wanted to stop the Location service, we should call
+        // Input.location.Stop();
+
+    }
+
+    // Update is called once per frame
+    float lastLongitude = -1;
+    void Update()
+    {
+        if (working)
+        {
+            if (local_gui.penDown)
+
+            {
+                //check to see if the location has changed since the last update
+                if (lastLongitude!= Input.location.lastData.latitude)
+                {
+
+
+                    //do something
+                }
+                        //Input.location.lastData.longitude;
+                        //Input.location.lastData.altitude;
+                        //Input.location.lastData.timestamp;
+                // If it has, add it our network helper
+
+
+            }
+        }
+    }
+    void OnGUI()  // This will run some UI objects
+    {
+        GUI.skin = this.myGUISkin;
+    }
+}
