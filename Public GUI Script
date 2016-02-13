@@ -1,0 +1,122 @@
+using UnityEngine;
+using System.Collections;
+using System.Collections.Generic;
+
+
+public class myGUIScript : MonoBehaviour
+{
+	// Everything declared as "public" will be visible and thus editable in unity's Inspector
+	// The different variables correspond accordingly to different kinds of inputs (see List, bool or int)
+	public GUISkin myGUISkin;
+
+	public AudioClip myAudioClip;
+    
+	public List<string> debugs;
+
+	private string group_name;
+	private string drawing_name;
+	public bool penDown = false;
+	public bool record = false;
+	// this should be a button?
+
+	public int stroke_name;
+	private Color penColor;
+
+	ColorPicker[] color_picker;
+
+	private myNetworkHelper network_helper;
+
+	// Use this for initialization
+	void Start ()
+	{
+	
+		if (this.myGUISkin == null) {
+			addDebug ("Please assign a GUISkin on the editor!");
+			this.enabled = false;
+			return;
+		}
+		network_helper = GameObject.Find ("myNetworkHelper").GetComponentInChildren<myNetworkHelper> ();
+		group_name = "Group_name";
+		drawing_name = "" + Random.value; //returns sg between 0.0 and 1.0
+		stroke_name = 0;
+		color_picker = GameObject.FindObjectsOfType<ColorPicker> ();
+
+		foreach (ColorPicker elem in color_picker) {
+			elem.useExternalDrawer = true;
+		}
+
+	}
+	
+	// Update is called once per frame
+	void Update ()
+	{
+	
+	}
+
+	/// <summary>
+	/// 
+	/// </summary>
+	void OnGUI ()
+	{
+
+		GUI.skin = this.myGUISkin;
+		// show the predefined group name, allow editing, override with new text
+		group_name = GUI.TextField (new Rect (0, 0, Screen.width, 100), group_name);
+		drawing_name = GUI.TextField (new Rect (0, 100, Screen.width, 100), drawing_name);
+		foreach (ColorPicker cp in color_picker) {
+			cp._DrawGUI ();
+		}
+		// Find out if something has changed (GUI.change)
+		bool oldPenDown = penDown;
+		penDown = GUI.Toggle (new Rect (0, 300, Screen.width, 100), penDown, "penDown");
+
+		if (GUI.changed) {
+			if (oldPenDown != penDown) { 
+				//Do something
+			}
+		}
+
+		//record = GUI.Toggle (new Rect (0, 200, Screen.width, 100), record, "Record");
+		if (GUI.Button (new Rect (0, 200, Screen.width, 100), "Record")) { // Tweak this to fit our GUI
+			myAudioClip = Microphone.Start (null, false, 10, 44100); //null is the default mic, false is no override, 10 is length
+			Debug.Log ("recording");
+
+		}
+		if (GUI.Button (new Rect (0, 500, Screen.width, 100), "Save")) {
+			SavWav.Save ("myFile", myAudioClip); // See SavWav class
+			//        audio.Play();
+		}
+
+		if (GUI.Button (new Rect (0, 400, Screen.width, 100), "Upload")) {
+			// Upload data
+			// network_helper.addStrokeColor("Stroke name", penColor);
+		}
+		// Display potential errors
+		int tempy = 500;
+		foreach (string d in debugs) {
+			GUI.Label (new Rect (0, tempy, Screen.width, 100), d);
+			tempy += 100;
+		}
+		// Clean the old ones if I get too many errors
+		if (debugs.Count > 4) {
+			debugs.RemoveAt (0);
+		}
+	}
+
+	public void OnSetColor (Color color)
+	{
+		penColor = color;
+		addDebug ("New color" + color);
+	}
+
+//	public void OnGetColor (ColorPicker picker)
+//	{
+//		picker.NotifyColor (penColor);
+//	}
+
+	public void addDebug (string e)
+	{
+		debugs.Add (e);
+		Debug.Log (e);
+	}
+}
