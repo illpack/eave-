@@ -14,7 +14,6 @@ public class myGUIScript : MonoBehaviour
 	public List<string> debugs;
 
 	private string group_name;
-	private string drawing_name;
 	public bool penDown = false;
 	public bool record = false;
 	// this should be a button?
@@ -44,55 +43,39 @@ public class myGUIScript : MonoBehaviour
 		foreach (ColorPicker elem in color_picker) {
 			elem.useExternalDrawer = true;
 		}
-
 	}
 	
 	// Update is called once per frame
 	void Update ()
 	{
-	
 	}
 
-	/// <summary>
-	/// 
-	/// </summary>
 	void OnGUI ()
 	{
-
 		GUI.skin = this.myGUISkin;
 		// show the predefined group name, allow editing, override with new text
 		group_name = GUI.TextField (new Rect (0, 0, Screen.width, 100), group_name);
-		drawing_name = GUI.TextField (new Rect (0, 100, Screen.width, 100), drawing_name);
-		foreach (ColorPicker cp in color_picker) {
-			cp._DrawGUI ();
-		}
 		// Find out if something has changed (GUI.change)
-		bool oldPenDown = penDown;
-		penDown = GUI.Toggle (new Rect (0, 300, Screen.width, 100), penDown, "penDown");
+//		if (GUI.changed) {
+//			if (oldPenDown != penDown) { //example
+//				//Do something
+//			}
+//		}
 
-		if (GUI.changed) {
-			if (oldPenDown != penDown) { 
-				//Do something
-			}
-		}
-
-		//record = GUI.Toggle (new Rect (0, 200, Screen.width, 100), record, "Record");
-		if (GUI.Button (new Rect (0, 200, Screen.width, 100), "Record")) { // Tweak this to fit our GUI
+		if (GUI.Button (new Rect (0, 100, Screen.width, 100), "Record")) { // Tweak this to fit our GUI
 			myAudioClip = Microphone.Start (null, false, 10, 44100); //null is the default mic, false is no override, 10 is length
-			Debug.Log ("recording");
-
+			Debug.Log ("recording:" + Microphone.IsRecording (null));
+			record = true;
 		}
-		if (GUI.Button (new Rect (0, 500, Screen.width, 100), "Save")) {
+		//Save data automatically
+		if (record == true && Microphone.IsRecording (null) == false) {
 			SavWav.Save ("myFile", myAudioClip); // See SavWav class
-			//        audio.Play();
-		}
-
-		if (GUI.Button (new Rect (0, 400, Screen.width, 100), "Upload")) {
-			// Upload data
-			// network_helper.addStrokeColor("Stroke name", penColor);
+			Debug.Log ("record saved");
+			//upload data (view network helper)
+			record = false;
 		}
 		// Display potential errors
-		int tempy = 500;
+		int tempy = 200;
 		foreach (string d in debugs) {
 			GUI.Label (new Rect (0, tempy, Screen.width, 100), d);
 			tempy += 100;
@@ -108,11 +91,6 @@ public class myGUIScript : MonoBehaviour
 		penColor = color;
 		addDebug ("New color" + color);
 	}
-
-//	public void OnGetColor (ColorPicker picker)
-//	{
-//		picker.NotifyColor (penColor);
-//	}
 
 	public void addDebug (string e)
 	{
